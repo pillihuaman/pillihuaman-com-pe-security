@@ -22,12 +22,15 @@ import pillihuaman.com.basebd.token.dao.TokenRepository;
 
 @Component
 @RequiredArgsConstructor
+@DependsOn("mongoDBClient")
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    @Autowired
+    private TokenRepository tokenRepository;
+    @Autowired
+    private UserDetailsService userDetailsService;
 
-    private  UserDetailsService userDetailsService;
-    private   TokenRepository tokere;
 
     @Override
     protected void doFilterInternal(
@@ -50,7 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         userEmail = jwtService.extractUsername(jwt);
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-            var isTokenValid = tokere.findByToken(jwt)
+            var isTokenValid = tokenRepository.findByToken(jwt)
                     .map(t -> !t.isExpired() && !t.isRevoked())
                     .orElse(false);
             if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {

@@ -20,8 +20,7 @@ import pillihuaman.com.lib.exception.CustomRestExceptionHandlerGeneric;
 //@ComponentScan(basePackages = {"pillihuaman.com.lib"})
 
 
-@SpringBootApplication(scanBasePackages = {"pillihuaman.com.basebd.config","pillihuaman.com.basebd","pillihuaman.com.security"
-        ,"pillihuaman.com.basebd.user.dao","pillihuaman.com.security.config"})
+@SpringBootApplication(scanBasePackages = {"pillihuaman.com.basebd.config", "pillihuaman.com.basebd", "pillihuaman.com.security"})
 @Import(CustomRestExceptionHandlerGeneric.class)
 public class SecurityApplication {
 

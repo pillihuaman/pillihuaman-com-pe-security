@@ -4,11 +4,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import pillihuaman.com.basebd.user.User;
 import pillihuaman.com.basebd.user.dao.UserRepository;
 
 import java.util.Optional;
-@Component
+@Service
 public class UserInfoUserDetailsServiceimplements implements UserDetailsService {
 
     private final UserRepository repository;
