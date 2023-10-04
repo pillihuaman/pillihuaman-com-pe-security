@@ -2,31 +2,39 @@ package pillihuaman.com.security.auth;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import pillihuaman.com.basebd.common.MyJsonWebToken;
+import pillihuaman.com.basebd.control.dao.ControlDAO;
+import pillihuaman.com.basebd.token.Token;
 import pillihuaman.com.basebd.token.TokenType;
 import pillihuaman.com.basebd.token.dao.TokenRepository;
-import pillihuaman.com.basebd.user.Role;
-import pillihuaman.com.basebd.user.dao.UserRepository;
-import pillihuaman.com.lib.request.ReqUser;
 import pillihuaman.com.basebd.user.User;
-import pillihuaman.com.basebd.token.Token;
+import pillihuaman.com.basebd.user.dao.UserRepository;
+import pillihuaman.com.lib.exception.CustomRestExceptionHandlerGeneric;
+import pillihuaman.com.lib.exception.UnprocessableEntityException;
+import pillihuaman.com.lib.request.ReqUser;
+import pillihuaman.com.lib.response.RespBase;
+import pillihuaman.com.lib.response.RespUser;
+import pillihuaman.com.lib.response.ResponseUser;
 import pillihuaman.com.security.config.JwtService;
-import pillihuaman.com.security.config.UserInfoUserDetailsServiceimplements;
+import pillihuaman.com.security.user.mapper.ControlMapper;
+import pillihuaman.com.security.user.mapper.UserMapper;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,20 +47,23 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final ControlDAO controlDAO;
+    @Autowired
+    private CustomRestExceptionHandlerGeneric exceptionHandler;
 
     public AuthenticationResponse register(ReqUser request) {
         String passwor = (passwordEncoder.encode(request.getPassword()));
         var user = User.builder()
                 .userName(request.getUserName())
-                .userNameP(request.getUserName())
-                .user(request.getUser())
+                // .userNameP(request.getUserName())
+                //.user(request.getUser())
                 .alias(request.getAlias())
                 .email(request.getEmail())
                 .mobilPhone(request.getMobilPhone())
-                .idSystem(new ArrayList<>())
+                // .idSystem(new ArrayList<>())
                 .passwordP(passwor)
                 .password(passwor)
-                .role(Role.ADMIN)
+                // .role(Role.ADMIN)
                 .build();
 
         var savedUser = repository.saveUser(user, null);
@@ -63,11 +74,13 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .user(UserMapper.INSTANCE.toRespUser(savedUser))
                 .build();
     }
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    public Object authenticate(AuthenticationRequest request) {
         try {
+            RespBase<AuthenticationResponse> response = new RespBase<>();
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
@@ -77,25 +90,24 @@ public class AuthenticationService {
             var user = repository.findByEmail(request.getEmail())
                     .orElseThrow();
             List<User> lsr = repository.findUserName(request.getEmail());
-            var jwtToken = jwtService.generateToken(userInfoUserDetailsServiceimplements.loadUserByUsername(request.getEmail()));
-            var refreshToken = jwtService.generateRefreshToken(userInfoUserDetailsServiceimplements.loadUserByUsername(request.getEmail()));
+            RespUser re = UserMapper.INSTANCE.toRespUser(lsr.get(0));
+            var jwtToken = jwtService.generateToken(lsr.get(0));
+            var refreshToken = jwtService.generateRefreshToken(lsr.get(0));
+
+            var control = ControlMapper.INSTANCE.controlsToRespControls(controlDAO.findByUser(lsr.get(0)));
             revokeAllUserTokens(lsr.get(0));
             saveUserToken(lsr.get(0), jwtToken);
-            return AuthenticationResponse.builder()
+            return RespBase.builder().payload(AuthenticationResponse.builder()
                     .accessToken(jwtToken)
                     .refreshToken(refreshToken)
-                    .build();
+                    .user(re)
+                    .controls(control)
+                    .build()).trace(RespBase.Trace.builder().traceId("1").build()).status(RespBase.Status.builder().success(true).error(null).build()).build();
         } catch (Exception ex) {
-            // Authentication failed, handle the error.
-            // You can return an error response here or perform any other necessary actions.
-            // For example:
-            return AuthenticationResponse.builder()
-                    .refreshToken("Invalid credentials")
-                    .build();
+            throw new UnprocessableEntityException("Authentication failed " + ex.getMessage());
         }
-
-
     }
+
 
     private void saveUserToken(User user, String jwtToken) {
         var token = Token.builder()
@@ -147,5 +159,28 @@ public class AuthenticationService {
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
         }
+    }
+
+    public MyJsonWebToken
+    getUserFromToken(String token) {
+        String tokensun=tokenSUb(token);
+        Claims claims = jwtService.extractAllClaims(tokensun);
+        String username = jwtService.extractUsername(tokensun);
+        Optional<User> userDetails = repository.findByEmail(username);
+        MyJsonWebToken toke = new MyJsonWebToken();
+        toke.setUser(ResponseUser.builder()._id(userDetails.get().getId()).mail(userDetails.get().getEmail()).
+                username(userDetails.get().getUsername()).mobil_Phone(userDetails.get().getMobilPhone()).build());
+        return toke;
+    }
+
+    public String tokenSUb(String request) {
+        final String jwt;
+        final String userEmail;
+        if (request == null || request.startsWith("Bearer ")) {
+            assert request != null;
+            jwt = request.substring(7);
+            return jwt;
+        }
+        return "";
     }
 }

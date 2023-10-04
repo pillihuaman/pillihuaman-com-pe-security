@@ -1,6 +1,6 @@
 # Server Configuration
 server:
-  port: 8080  # Change to the desired port for your Spring Boot application
+  port: 8085  # Change to the desired port for your Spring Boot application
 
 # MongoDB Configuration
 mongodb:
