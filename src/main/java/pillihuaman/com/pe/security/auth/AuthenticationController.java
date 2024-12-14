@@ -35,6 +35,7 @@ public class AuthenticationController {
             @RequestBody AuthenticationRequest request
     ) {
 
+
         Object result = service.authenticate(request);
         return ResponseEntity.ok(result);
 
