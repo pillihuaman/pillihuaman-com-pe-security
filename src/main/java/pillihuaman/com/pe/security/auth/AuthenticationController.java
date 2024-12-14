@@ -1,17 +1,15 @@
-package pillihuaman.com.security.auth;
+package pillihuaman.com.pe.security.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.LifecycleState;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pillihuaman.com.lib.exception.ErrorResponseApiGeneric;
-import pillihuaman.com.lib.request.ReqBase;
-import pillihuaman.com.lib.request.ReqUser;
-import pillihuaman.com.lib.response.RespBase;
-import pillihuaman.com.lib.response.RespUser;
+import pillihuaman.com.pe.lib.dto.AuthenticationRequest;
+import pillihuaman.com.pe.lib.dto.AuthenticationResponse;
+import pillihuaman.com.pe.lib.request.ReqUser;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,8 +19,8 @@ import java.util.List;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
-
-    private final AuthenticationService service;
+    @Autowired
+    private AuthenticationService service;
     private final List<String> lisError = new ArrayList<>();
 
     @PostMapping("/register")
@@ -41,6 +39,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(result);
 
     }
+
     @GetMapping("/getUserByToken")
     public ResponseEntity<?> getUser(
             @RequestParam String request

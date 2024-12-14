@@ -1,12 +1,12 @@
-package pillihuaman.com.security.user.mapper;
+package pillihuaman.com.pe.security.user.mapper;
 
 import org.bson.types.ObjectId;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
-import pillihuaman.com.basebd.user.User;
-import pillihuaman.com.lib.response.RespUser;
+import pillihuaman.com.pe.basebd.user.User;
+import pillihuaman.com.pe.lib.response.RespUser;
 
 import java.util.List;
 

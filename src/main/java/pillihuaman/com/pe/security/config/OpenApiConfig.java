@@ -1,5 +1,5 @@
-package pillihuaman.com.security.config;
-
+package pillihuaman.com.pe.security.config;
+/*
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -29,7 +29,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
         servers = {
                 @Server(
                         description = "Local ENV",
-                        url = "http://localhost:8080"
+                        url = "http://localhost:8085"
                 ),
                 @Server(
                         description = "PROD ENV",
@@ -50,5 +50,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
         bearerFormat = "JWT",
         in = SecuritySchemeIn.HEADER
 )
+
+ */
 public class OpenApiConfig {
 }

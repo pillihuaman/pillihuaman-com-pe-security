@@ -1,16 +1,11 @@
-package pillihuaman.com.security;
+package pillihuaman.com.pe.security;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import pillihuaman.com.lib.exception.CustomRestExceptionHandlerGeneric;
+import pillihuaman.com.pe.lib.exception.CustomRestExceptionHandlerGeneric;
+
 
 //@EnableAsync
 //@EnableAutoConfiguration(exclude = { ErrorMvcAutoConfiguration.class })
@@ -20,13 +15,20 @@ import pillihuaman.com.lib.exception.CustomRestExceptionHandlerGeneric;
 //@ComponentScan(basePackages = {"pillihuaman.com.lib"})
 
 
-@SpringBootApplication(scanBasePackages = {"pillihuaman.com.basebd.config", "pillihuaman.com.basebd", "pillihuaman.com.security"})
+
+@SpringBootApplication(scanBasePackages = {"pillihuaman.com.pe.basebd.config",
+        "pillihuaman.com.pe.basebd", "pillihuaman.com.pe.security"})
+
 @Import(CustomRestExceptionHandlerGeneric.class)
 public class SecurityApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SecurityApplication.class, args);
+        SpringApplication app = new SpringApplication(SecurityApplication.class);
+        // Configura el puerto directamente
+        app.setDefaultProperties(java.util.Map.of("server.port", "8085"));
+        app.run(args);
     }
+}
 /*
 	@Bean
 	public CommandLineRunner commandLineRunner(
@@ -53,4 +55,4 @@ public class SecurityApplication {
 
 		};
 	}*/
-}
+
