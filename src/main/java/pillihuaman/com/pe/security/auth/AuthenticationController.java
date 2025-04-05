@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pillihuaman.com.pe.lib.dto.AuthenticationRequest;
-import pillihuaman.com.pe.lib.dto.AuthenticationResponse;
-import pillihuaman.com.pe.lib.request.ReqUser;
+import pillihuaman.com.pe.security.dto.AuthenticationRequest;
+import pillihuaman.com.pe.security.dto.AuthenticationResponse;
+import pillihuaman.com.pe.security.dto.ReqUser;
 
 
 import java.io.IOException;
@@ -24,6 +24,7 @@ public class AuthenticationController {
     private final List<String> lisError = new ArrayList<>();
 
     @PostMapping("/register")
+    @CrossOrigin(origins = "*")
     public ResponseEntity<AuthenticationResponse> register(
             @RequestBody ReqUser request
     ) {
@@ -34,7 +35,6 @@ public class AuthenticationController {
     public ResponseEntity<?> authenticate(
             @RequestBody AuthenticationRequest request
     ) {
-
 
         Object result = service.authenticate(request);
         return ResponseEntity.ok(result);

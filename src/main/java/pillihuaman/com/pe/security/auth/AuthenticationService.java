@@ -9,27 +9,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import pillihuaman.com.pe.lib.common.RespBase;
+import pillihuaman.com.pe.lib.exception.CustomRestExceptionHandlerGeneric;
+import pillihuaman.com.pe.lib.exception.UnprocessableEntityException;
+import pillihuaman.com.pe.security.JwtService;
+import pillihuaman.com.pe.security.dto.*;
+import pillihuaman.com.pe.security.entity.token.Token;
+import pillihuaman.com.pe.security.entity.token.TokenType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import pillihuaman.com.pe.basebd.common.MyJsonWebToken;
-import pillihuaman.com.pe.basebd.control.dao.ControlDAO;
-import pillihuaman.com.pe.basebd.token.Token;
-import pillihuaman.com.pe.basebd.token.TokenType;
-import pillihuaman.com.pe.basebd.token.dao.TokenRepository;
-import pillihuaman.com.pe.basebd.user.User;
-import pillihuaman.com.pe.basebd.user.dao.UserRepository;
-import pillihuaman.com.pe.lib.dto.AuthenticationRequest;
-import pillihuaman.com.pe.lib.dto.AuthenticationResponse;
-import pillihuaman.com.pe.lib.exception.CustomRestExceptionHandlerGeneric;
-import pillihuaman.com.pe.lib.exception.UnprocessableEntityException;
-import pillihuaman.com.pe.lib.request.ReqUser;
-import pillihuaman.com.pe.lib.response.RespBase;
-import pillihuaman.com.pe.lib.response.RespUser;
-import pillihuaman.com.pe.lib.response.ResponseUser;
-import pillihuaman.com.pe.lib.security.JwtService;
+import pillihuaman.com.pe.security.entity.user.User;
+import pillihuaman.com.pe.security.repository.ControlRepository;
+import pillihuaman.com.pe.security.repository.TokenRepository;
+import pillihuaman.com.pe.security.repository.UserRepository;
 import pillihuaman.com.pe.security.user.mapper.ControlMapper;
 import pillihuaman.com.pe.security.user.mapper.UserMapper;
+import pillihuaman.com.pe.security.util.MyJsonWebToken;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,15 +37,15 @@ public class AuthenticationService {
     @Autowired
     private UserRepository repository; // Inyectado con @RequiredArgsConstructor
     @Autowired
-    private  TokenRepository tokenRepository; // Inyectado con @RequiredArgsConstructor
+    private TokenRepository tokenRepository; // Inyectado con @RequiredArgsConstructor
     @Autowired
     private  PasswordEncoder passwordEncoder; // Inyectado con @RequiredArgsConstructor
     @Autowired
-    private  JwtService jwtService; // Inyectado con @RequiredArgsConstructor
+    private JwtService jwtService; // Inyectado con @RequiredArgsConstructor
     @Autowired
     private  AuthenticationManager authenticationManager; // Inyectado con @RequiredArgsConstructor
     @Autowired
-    private  ControlDAO controlDAO; // Inyectado con @RequiredArgsConstructor
+    private ControlRepository controlDAO; // Inyectado con @RequiredArgsConstructor
 
     @Autowired
     private CustomRestExceptionHandlerGeneric exceptionHandler; // Inyectado con @Autowired
@@ -59,6 +55,7 @@ public class AuthenticationService {
 
     public AuthenticationResponse register(ReqUser request) {
         String password = passwordEncoder.encode(request.getPassword());
+
         var user = User.builder()
                 .userName(request.getUserName())
                 .alias(request.getAlias())

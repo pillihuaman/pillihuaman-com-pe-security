@@ -1,55 +1,58 @@
+# ===============================
 # Server Configuration
+# ===============================
 server:
-  port: 8085  # Change to the desired port for your Spring Boot application
+  port: 8085  # Change if needed
 
+# ===============================
 # MongoDB Configuration
-mongodb:
-  conexiones:
-    - credenciales:
-        usuario: "root"
-        clave: "123456" # Here, you can use a placeholder for the password.
-      nodos:
-        - host: "localhost"
-          port: 27017
-        - host: "localhost"
-          port: 27017
+# ===============================
+spring:
+  data:
+    mongodb:
+      uri: "mongodb+srv://zarmir:12345DEza...@alamodaperu.mongocluster.cosmos.azure.com/?tls=true&authMechanism=SCRAM-SHA-256&retrywrites=false&maxIdleTimeMS=120000"
       database: "alamodaperu"
-      replicaset: "alamodaperu"
-      dsname: "alamodaperu"
-      poolconfig:
-        maxPoolSize: 100
-        minPoolSize: 10
-        maxIdleTimeMS: 30000
-        waitQueueMultiple: 5
-        waitQueueTimeoutMS: 10000
-      readpreference: "primaryPreferred"
-      writeconcern: "majority"
-      pojos:
-        - "pillihuaman.com.basebd.config"
-        - "pillihuaman.com.basebd"
-        - "pillihuaman.com.basebd.user"
-        - "pillihuaman.com.security.config"
+  mvc:
+    view:
+          prefix: /WEB-INF/views/Imagen/
+          suffix: .jsp
+  servlet:
+    multipart:
+          enabled: true
+          max-file-size: 500MB
+          max-request-size: 500MB
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 
-  # Application Configuration
+# ===============================
+# Security Configuration (JWT)
+# ===============================
 application:
   security:
     jwt:
       secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      expiration: 86400000 # a day
+      expiration: 86400000  # 1 day
       refresh-token:
-        expiration: 604800000 # 7 days
+        expiration: 604800000  # 7 days
 
-
-# Logging Configuration (Optional)
+# ===============================
+# Logging Configuration
+# ===============================
 logging:
   level:
     root: INFO
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
-    pillihuaman.com.security: DEBUG  # Change to the package name of your application
+    pillihuaman.com.security: DEBUG
 
-# Other Application Specific Configurations
-# Add your custom configurations here as needed.
-spring:
-  profiles:
-    active: dev
+# ===============================
+# View Resolver Configuration
+# ===============================
+
+# ===============================
+# Multipart File Upload Configuration
+# ===============================
+
+# ===============================
+# Auto Configuration Exclusion
+# ===============================
