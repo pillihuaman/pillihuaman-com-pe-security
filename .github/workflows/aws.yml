@@ -51,7 +51,7 @@ jobs:
       - name: Build JAR with Maven
         run: mvn clean install -DskipTests
 
-   - name: Copy JAR file to EC2 instance 1
+      - name: Copy JAR file to EC2 instance 1
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
 
