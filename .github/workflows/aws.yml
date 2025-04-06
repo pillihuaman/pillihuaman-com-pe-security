@@ -29,17 +29,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Step 3: Install Java (if needed for building the project)
+      # Step 3: Install Java (needed for building the project)
       - name: Install Java
         run: sudo apt-get install openjdk-17-jdk -y
 
-      # Step 4: Make sure mvnw has execution permissions
-      - name: Make mvnw executable
-        run: chmod +x ./mvnw
+      # Step 4: Install Maven
+      - name: Install Maven
+        run: sudo apt-get install maven -y
 
-      # Step 5: Build JAR file (if the JAR file is not already in your repository)
-      - name: Build JAR
-        run: ./mvnw clean install -DskipTests  # Or use ./gradlew build if using Gradle
+      # Step 5: Build JAR with Maven
+      - name: Build JAR with Maven
+        run: mvn clean install -DskipTests
 
       # Step 6: Copy JAR files to EC2 instances using SCP
       - name: Copy JAR files to EC2 instance 1
