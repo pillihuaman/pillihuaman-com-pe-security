@@ -10,7 +10,6 @@ env:
   EC2_INSTANCE_1_IP: 18.191.52.191
   EC2_INSTANCE_2_IP: 3.145.180.222
   EC2_USER: ec2-user
-  EC2_KEY_PAIR_PATH: ${{ secrets.EC2_KEY_PAIR_PATH }}
   AWS_DEFAULT_REGION: us-east-2
 
 jobs:
@@ -28,54 +27,54 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Authenticate with AWS CodeArtifact for Maven
+      - name: Save EC2 key pair to file
         run: |
-          # Obtén el token de autenticación de CodeArtifact
-          AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain pillihuamanlib --domain-owner 570123367471 --query authorizationToken --output text)
-          
-          # Configura el archivo settings.xml de Maven
+          echo "${{ secrets.EC2_KEY_PAIR_PATH }}" > ec2_key.pem
+          chmod 400 ec2_key.pem
+
+      - name: Install Java and Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk maven
+
+      - name: Authenticate with AWS CodeArtifact and configure Maven
+        run: |
+          AUTH_TOKEN=$(aws codeartifact get-authorization-token \
+            --domain pillihuamanlib \
+            --domain-owner 570123367471 \
+            --query authorizationToken \
+            --output text)
+
           mkdir -p ~/.m2
-          echo "<servers>
-            <server>
-              <id>pillihuaman-com-pe-lib</id>
-              <username>aws</username>
-              <password>${AUTH_TOKEN}</password>
-            </server>
-          </servers>" > ~/.m2/settings.xml
-
-      - name: Install Java
-        run: sudo apt-get install openjdk-17-jdk -y
-
-      - name: Install Maven
-        run: sudo apt-get install maven -y
+          sed "s|{{AUTH_TOKEN}}|$AUTH_TOKEN|g" ci/settings-template.xml > ~/.m2/settings.xml
 
       - name: Build JAR with Maven
         run: mvn clean install -DskipTests
 
       - name: Copy JAR files to EC2 instance 1
         run: |
-          scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
-          scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
 
       - name: Copy JAR files to EC2 instance 2
         run: |
-          scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
-          scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
 
       - name: Restart services on EC2 instance 1
         run: |
-          ssh -i ${{ secrets.EC2_KEY_PAIR_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }} << 'EOF'
-            sudo systemctl stop pillihuaman-com-pe-security
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }} << 'EOF'
+            sudo systemctl stop pillihuaman-com-pe-security || true
             sudo systemctl start pillihuaman-com-pe-security
-            sudo systemctl stop pillihuaman-com-pe-support
+            sudo systemctl stop pillihuaman-com-pe-support || true
             sudo systemctl start pillihuaman-com-pe-support
           EOF
 
       - name: Restart services on EC2 instance 2
         run: |
-          ssh -i ${{ secrets.EC2_KEY_PAIR_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }} << 'EOF'
-            sudo systemctl stop pillihuaman-com-pe-security
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }} << 'EOF'
+            sudo systemctl stop pillihuaman-com-pe-security || true
             sudo systemctl start pillihuaman-com-pe-security
-            sudo systemctl stop pillihuaman-com-pe-support
+            sudo systemctl stop pillihuaman-com-pe-support || true
             sudo systemctl start pillihuaman-com-pe-support
           EOF
