@@ -29,19 +29,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Step 3: Install Java (needed for building the project)
+      # Step 3: Authenticate with AWS CodeArtifact
+      - name: Login to AWS CodeArtifact
+        run: |
+          aws codeartifact login --tool maven --repository pillihuaman-com-pe-lib --domain pillihuamanlib --domain-owner <AWS_ACCOUNT_ID>
+
+      # Step 4: Install Java (needed for building the project)
       - name: Install Java
         run: sudo apt-get install openjdk-17-jdk -y
 
-      # Step 4: Install Maven
+      # Step 5: Install Maven
       - name: Install Maven
         run: sudo apt-get install maven -y
 
-      # Step 5: Build JAR with Maven
+      # Step 6: Build JAR with Maven
       - name: Build JAR with Maven
         run: mvn clean install -DskipTests
 
-      # Step 6: Copy JAR files to EC2 instances using SCP
+      # Step 7: Copy JAR files to EC2 instances using SCP
       - name: Copy JAR files to EC2 instance 1
         run: |
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
@@ -52,8 +57,7 @@ jobs:
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
 
-
-      # Step 7: SSH into EC2 instances and restart the services
+      # Step 8: SSH into EC2 instances and restart the services
       - name: Restart services on EC2 instance 1
         run: |
           ssh -i ${{ secrets.EC2_KEY_PAIR_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }} << 'EOF'
