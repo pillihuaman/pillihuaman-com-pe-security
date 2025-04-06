@@ -30,8 +30,7 @@ jobs:
       # Step to authenticate with AWS CodeArtifact
       - name: Authenticate with AWS CodeArtifact
         run: |
-          aws codeartifact login --repository pillihuaman-com-pe-lib --domain pillihuamanlib --domain-owner 570123367471
-
+         aws codeartifact login --tool maven --repository pillihuaman-com-pe-lib --domain pillihuamanlib --domain-owner 570123367471
       - name: Install Java
         run: sudo apt-get install openjdk-17-jdk -y
 
