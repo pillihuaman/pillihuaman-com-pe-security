@@ -33,11 +33,15 @@ jobs:
       - name: Install Java
         run: sudo apt-get install openjdk-17-jdk -y
 
-      # Step 4: Build JAR file (if the JAR file is not already in your repository)
+      # Step 4: Make sure mvnw has execution permissions
+      - name: Make mvnw executable
+        run: chmod +x ./mvnw
+
+      # Step 5: Build JAR file (if the JAR file is not already in your repository)
       - name: Build JAR
         run: ./mvnw clean install -DskipTests  # Or use ./gradlew build if using Gradle
 
-      # Step 5: Copy JAR files to EC2 instances using SCP
+      # Step 6: Copy JAR files to EC2 instances using SCP
       - name: Copy JAR files to EC2 instance 1
         run: |
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
@@ -48,7 +52,7 @@ jobs:
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
 
-      # Step 6: SSH into EC2 instances and restart the services
+      # Step 7: SSH into EC2 instances and restart the services
       - name: Restart services on EC2 instance 1
         run: |
           ssh -i ${{ secrets.EC2_KEY_PAIR_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }} << 'EOF'
