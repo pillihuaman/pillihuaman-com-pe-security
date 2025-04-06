@@ -32,7 +32,7 @@ jobs:
       # Step 3: Authenticate with AWS CodeArtifact
       - name: Login to AWS CodeArtifact
         run: |
-          aws codeartifact login --tool maven --repository pillihuaman-com-pe-lib --domain pillihuamanlib --domain-owner <AWS_ACCOUNT_ID>
+          aws codeartifact login --tool maven --repository pillihuaman-com-pe-lib --domain pillihuamanlib --domain-owner 570123367471
 
       # Step 4: Install Java (needed for building the project)
       - name: Install Java
