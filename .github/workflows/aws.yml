@@ -3,25 +3,23 @@ name: Deploy to AWS EC2
 on:
   push:
     branches:
-      - master  # Trigger deployment when changes are pushed to the 'master' branch
+      - master
 
 env:
-  AWS_REGION: us-east-2  # Specify your AWS region
-  EC2_INSTANCE_1_IP: 18.191.52.191  # Public IP of the first EC2 instance
-  EC2_INSTANCE_2_IP: 3.145.180.222  # Public IP of the second EC2 instance
-  EC2_USER: ec2-user  # Default user for EC2 Linux instances
-  EC2_KEY_PAIR_PATH: ${{ secrets.EC2_KEY_PAIR_PATH }}  # Path to your EC2 private key in GitHub Secrets
+  AWS_REGION: us-east-2
+  EC2_INSTANCE_1_IP: 18.191.52.191
+  EC2_INSTANCE_2_IP: 3.145.180.222
+  EC2_USER: ec2-user
+  EC2_KEY_PAIR_PATH: ${{ secrets.EC2_KEY_PAIR_PATH }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Set up AWS CLI
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -29,24 +27,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Step 3: Authenticate with AWS CodeArtifact
-      - name: Login to AWS CodeArtifact
+      # Step to authenticate with AWS CodeArtifact
+      - name: Authenticate with AWS CodeArtifact
         run: |
-          aws codeartifact login --tool maven --repository pillihuaman-com-pe-lib --domain pillihuamanlib --domain-owner 570123367471
+          aws codeartifact login --repository pillihuaman-com-pe-lib --domain pillihuamanlib --domain-owner 570123367471
 
-      # Step 4: Install Java (needed for building the project)
       - name: Install Java
         run: sudo apt-get install openjdk-17-jdk -y
 
-      # Step 5: Install Maven
       - name: Install Maven
         run: sudo apt-get install maven -y
 
-      # Step 6: Build JAR with Maven
       - name: Build JAR with Maven
         run: mvn clean install -DskipTests
 
-      # Step 7: Copy JAR files to EC2 instances using SCP
       - name: Copy JAR files to EC2 instance 1
         run: |
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
@@ -57,7 +51,6 @@ jobs:
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
           scp -i ${{ secrets.EC2_KEY_PAIR_PATH }} target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
 
-      # Step 8: SSH into EC2 instances and restart the services
       - name: Restart services on EC2 instance 1
         run: |
           ssh -i ${{ secrets.EC2_KEY_PAIR_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }} << 'EOF'
