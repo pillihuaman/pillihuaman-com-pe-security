@@ -58,3 +58,16 @@ jobs:
       - name: Copy JAR file to EC2 instance 2
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
+           - name: Restart microservice in EC2 instance 1
+        run: |
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }} << 'EOF'
+            pkill -f 'pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar' || true
+            nohup java -jar /home/ec2-user/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar > log.out 2>&1 &
+          EOF
+
+      - name: Restart microservice in EC2 instance 2
+        run: |
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }} << 'EOF'
+            pkill -f 'pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar' || true
+            nohup java -jar /home/ec2-user/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar > log.out 2>&1 &
+          EOF
