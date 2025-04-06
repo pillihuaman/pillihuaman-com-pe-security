@@ -51,30 +51,24 @@ jobs:
       - name: Build JAR with Maven
         run: mvn clean install -DskipTests
 
-      - name: Copy JAR files to EC2 instance 1
+   - name: Copy JAR file to EC2 instance 1
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }}:/home/${{ env.EC2_USER }}/
 
-      - name: Copy JAR files to EC2 instance 2
+      - name: Copy JAR file to EC2 instance 2
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-security-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no target/pillihuaman-com-pe-support-0.0.1-SNAPSHOT.jar ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }}:/home/${{ env.EC2_USER }}/
 
-      - name: Restart services on EC2 instance 1
+      - name: Restart service on EC2 instance 1
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_1_IP }} << 'EOF'
             sudo systemctl stop pillihuaman-com-pe-security || true
             sudo systemctl start pillihuaman-com-pe-security
-            sudo systemctl stop pillihuaman-com-pe-support || true
-            sudo systemctl start pillihuaman-com-pe-support
           EOF
 
-      - name: Restart services on EC2 instance 2
+      - name: Restart service on EC2 instance 2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_2_IP }} << 'EOF'
             sudo systemctl stop pillihuaman-com-pe-security || true
             sudo systemctl start pillihuaman-com-pe-security
-            sudo systemctl stop pillihuaman-com-pe-support || true
-            sudo systemctl start pillihuaman-com-pe-support
           EOF
