@@ -17,6 +17,12 @@
     <properties>
         <java.version>17</java.version>
     </properties>
+    <repositories>
+        <repository>
+            <id>pillihuamanlib-pillihuaman-com-pe-lib</id>
+            <url>https://pillihuamanlib-570123367471.d.codeartifact.us-east-2.amazonaws.com/maven/pillihuaman-com-pe-lib/</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
