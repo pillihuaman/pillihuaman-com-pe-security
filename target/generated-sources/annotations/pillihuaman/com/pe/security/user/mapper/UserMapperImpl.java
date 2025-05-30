@@ -8,7 +8,7 @@ import pillihuaman.com.pe.security.entity.user.User;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-04-07T22:34:50-0500",
+    date = "2025-05-24T12:05:46-0500",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (JetBrains s.r.o.)"
 )
 public class UserMapperImpl implements UserMapper {
