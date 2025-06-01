@@ -6,11 +6,11 @@ on:
       - master
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: us-east-2                # Región donde está el CodeArtifact
+  EC2_REGION: us-east-1               # Región donde está la instancia EC2
   EC2_INSTANCE_1_IP: 54.164.157.157
-  EC2_INSTANCE_2_IP: 54.164.157.157
   EC2_USER: ec2-user
-  AWS_DEFAULT_REGION: us-east-1
+  AWS_DEFAULT_REGION: us-east-2       # Para comandos de AWS CLI como CodeArtifact
 
 jobs:
   deploy:
@@ -41,7 +41,8 @@ jobs:
         run: |
           AUTH_TOKEN=$(aws codeartifact get-authorization-token \
             --domain pillihuamanlib \
-            --domain-owner 570123367471 \
+            --domain-owner 020510965219 \
+            --region ${{ env.AWS_REGION }} \
             --query authorizationToken \
             --output text)
 
