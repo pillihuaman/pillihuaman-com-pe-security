@@ -56,6 +56,7 @@ public class AuthenticationController {
             HttpServletRequest request,
             HttpServletResponse response
     ) throws IOException {
+        
         service.refreshToken(request, response);
     }
 
