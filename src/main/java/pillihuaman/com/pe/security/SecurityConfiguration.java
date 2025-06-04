@@ -3,6 +3,7 @@ package pillihuaman.com.pe.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,30 +34,27 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // ⚠️ Agrega aquí los dominios permitidos (local y EC2 AWS)
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
                 "http://ec2-3-145-180-222.us-east-2.compute.amazonaws.com",
                 "https://d38ve8mwrujc52.cloudfront.net",
                 "http://10.0.2.2:8080",
-                "http://192.168.1.10:8080" // Replace with your frontend URLs
-
+                "http://192.168.1.10:8080"
         ));
-
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true); // para enviar tokens o cookies
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors().configurationSource(source).and()
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
                         "/api/v1/auth/**",
                         "/v2/api-docs",

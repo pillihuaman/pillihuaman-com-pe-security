@@ -17,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST, RequestMethod.GET, RequestMethod.OPTIONS})
 @RequiredArgsConstructor
 public class AuthenticationController {
     @Autowired
@@ -24,7 +25,6 @@ public class AuthenticationController {
     private final List<String> lisError = new ArrayList<>();
 
     @PostMapping("/register")
-    @CrossOrigin(origins = "*")
     public ResponseEntity<AuthenticationResponse> register(
             @RequestBody ReqUser request
     ) {
