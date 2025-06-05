@@ -39,7 +39,7 @@ public class SecurityConfiguration {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
                 "http://ec2-3-145-180-222.us-east-2.compute.amazonaws.com",
-                "https://d38ve8mwrujc52.cloudfront.net",
+                "http://d38ve8mwrujc52.cloudfront.net",
                 "http://10.0.2.2:8080",
                 "http://192.168.1.10:8080"
         ));
