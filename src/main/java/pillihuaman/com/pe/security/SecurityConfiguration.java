@@ -40,6 +40,7 @@ public class SecurityConfiguration {
                 "http://localhost:4200",
                 "http://ec2-3-145-180-222.us-east-2.compute.amazonaws.com",
                 "http://d38ve8mwrujc52.cloudfront.net",
+                "https://alamodaperu.online",
                 "http://10.0.2.2:8080",
                 "http://192.168.1.10:8080"
         ));
