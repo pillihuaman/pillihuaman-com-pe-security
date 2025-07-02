@@ -112,6 +112,7 @@ public class JwtService {
 
         claims.put("user", userMap);
         claims.put("application", applicationMap);
+        claims.put("role", userDetails.getRoles());
 
         return claims;
     }

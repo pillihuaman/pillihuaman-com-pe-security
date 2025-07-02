@@ -41,7 +41,7 @@ public class User implements UserDetails {
     private String typeDocument;
     @Indexed(unique = true)
     private String numTypeDocument;
-    private Roles roles;
+    private List<Roles> roles;
     private List<System> system;
     private UserSetting customSettings;
     private List<Token> tokens;

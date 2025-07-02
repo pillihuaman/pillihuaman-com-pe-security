@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,6 +15,7 @@ import pillihuaman.com.pe.lib.exception.CustomRestExceptionHandlerGeneric;
 import pillihuaman.com.pe.lib.exception.UnprocessableEntityException;
 import pillihuaman.com.pe.security.JwtService;
 import pillihuaman.com.pe.security.dto.*;
+import pillihuaman.com.pe.security.entity.role.Roles;
 import pillihuaman.com.pe.security.entity.token.Token;
 import pillihuaman.com.pe.security.entity.token.TokenType;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -29,6 +31,7 @@ import pillihuaman.com.pe.security.util.MyJsonWebToken;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -39,11 +42,11 @@ public class AuthenticationService {
     @Autowired
     private TokenRepository tokenRepository; // Inyectado con @RequiredArgsConstructor
     @Autowired
-    private  PasswordEncoder passwordEncoder; // Inyectado con @RequiredArgsConstructor
+    private PasswordEncoder passwordEncoder; // Inyectado con @RequiredArgsConstructor
     @Autowired
     private JwtService jwtService; // Inyectado con @RequiredArgsConstructor
     @Autowired
-    private  AuthenticationManager authenticationManager; // Inyectado con @RequiredArgsConstructor
+    private AuthenticationManager authenticationManager; // Inyectado con @RequiredArgsConstructor
     @Autowired
     private ControlRepository controlDAO; // Inyectado con @RequiredArgsConstructor
 
@@ -63,6 +66,7 @@ public class AuthenticationService {
                 .mobilPhone(request.getMobilPhone())
                 .passwordP(password)
                 .password(password)
+                .roles(convertRolesRequestToRoles(request.getRoles()))
                 .build();
 
         var savedUser = repository.saveUser(user, null);
@@ -111,6 +115,62 @@ public class AuthenticationService {
             throw new UnprocessableEntityException("Authentication failed " + ex.getMessage());
         }
     }
+    private List<Roles> convertRolesRequestToRoles(List<RolesRequest> rolesRequestList) {
+        if (rolesRequestList == null) return List.of();
+        return rolesRequestList.stream().map(req ->
+                Roles.builder()
+                        .id(new ObjectId(req.getId()))  // Asegúrate de que el DTO tenga el ID
+                        .name(req.getName())
+                        .description(req.getDescription())
+                        .active(true) // O usa req.getActive() si aplica
+                        .build()
+        ).toList();
+    }
+
+    public Object generateGuestToken() {
+        try {
+            // Buscar al usuario invitado
+            String guestEmail = "pillihuamanhz@alamodaperu.online"; // puedes usar un campo fijo
+            User mainGuestUser = repository.findByEmail(guestEmail)
+                    .orElseThrow(() -> new UnprocessableEntityException("Guest user not found in database."));
+
+            // Obtener lista por nombre si es parte de tu lógica (opcional)
+            // List<User> usersByName = repository.findUserName(guestEmail);
+            // User mainGuestUser = usersByName.isEmpty() ? guestUser : usersByName.get(0);
+
+            // Generar tokens
+            String jwtToken = jwtService.generateToken(mainGuestUser);
+            String refreshToken = jwtService.generateRefreshToken(mainGuestUser);
+
+            // Obtener controles si aplica
+            var controls = ControlMapper.INSTANCE.controlsToRespControls(controlDAO.findByUser(mainGuestUser));
+
+            // Revocar tokens anteriores y guardar el nuevo
+            revokeAllUserTokens(mainGuestUser);
+            saveUserToken(mainGuestUser, jwtToken);
+
+            // Mapear user
+            RespUser respUser = UserMapper.INSTANCE.toRespUser(mainGuestUser);
+
+            // Construir respuesta
+            AuthenticationResponse authResponse = AuthenticationResponse.builder()
+                    .accessToken(jwtToken)
+                    .refreshToken(refreshToken)
+                    .user(respUser)
+                    .controls(controls)
+                    .build();
+
+            return RespBase.builder()
+                    .payload(authResponse)
+                    .trace(RespBase.Trace.builder().traceId("guest-token").build())
+                    .status(RespBase.Status.builder().success(true).error(null).build())
+                    .build();
+
+        } catch (Exception ex) {
+            throw new UnprocessableEntityException("Guest token generation failed: " + ex.getMessage());
+        }
+    }
+
 
     private void saveUserToken(User user, String jwtToken) {
         var token = Token.builder()
@@ -122,6 +182,7 @@ public class AuthenticationService {
                 .build();
         tokenRepository.save(token);
     }
+
 
     private void revokeAllUserTokens(User user) {
         var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
@@ -186,4 +247,5 @@ public class AuthenticationService {
         }
         return "";
     }
+
 }

@@ -23,24 +23,23 @@ public class AuthenticationController {
     @Autowired
     private AuthenticationService service;
     private final List<String> lisError = new ArrayList<>();
-
-    @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(
-            @RequestBody ReqUser request
-    ) {
+    @PostMapping(value = "/register", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody ReqUser request) {
         return ResponseEntity.ok(service.register(request));
     }
-
     @PostMapping("/authenticate")
     public ResponseEntity<?> authenticate(
             @RequestBody AuthenticationRequest request
     ) {
-
         Object result = service.authenticate(request);
         return ResponseEntity.ok(result);
-
     }
-
+    @PostMapping("/guest")
+    public ResponseEntity<?> guestToken() {
+        // Genera un token tipo "guest" directamente
+        Object response = service.generateGuestToken();
+        return ResponseEntity.ok(response);
+    }
     @GetMapping("/getUserByToken")
     public ResponseEntity<?> getUser(
             @RequestParam String request
@@ -50,7 +49,6 @@ public class AuthenticationController {
         return ResponseEntity.ok(result);
 
     }
-
     @PostMapping("/refresh-token")
     public void refreshToken(
             HttpServletRequest request,
@@ -59,6 +57,4 @@ public class AuthenticationController {
         
         service.refreshToken(request, response);
     }
-
-
-}
+    }

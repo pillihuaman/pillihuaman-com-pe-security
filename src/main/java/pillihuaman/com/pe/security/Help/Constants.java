@@ -12,5 +12,8 @@ public class Constants {
 	public static final String COLLECTION_USER = "user";
 	public static final String COLLECTION_TOKEN = "token";
 	public static final String COLLECTION_CONTROL = "control";
+	public static final String COLLECTION_ROLE = "role";
+	public static final String COLLECTION_TENANT = "tenat";
+
 	}
 
