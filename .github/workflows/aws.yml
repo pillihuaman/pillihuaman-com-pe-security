@@ -8,7 +8,7 @@ on:
 env:
   AWS_REGION: us-east-2                # Región donde está el CodeArtifact
   EC2_REGION: us-east-1               # Región donde está la instancia EC2
-  EC2_INSTANCE_1_IP: 54.164.157.157
+  EC2_INSTANCE_1_IP: 34.230.38.216
   EC2_USER: ec2-user
   AWS_DEFAULT_REGION: us-east-2       # Para comandos de AWS CLI como CodeArtifact
 
