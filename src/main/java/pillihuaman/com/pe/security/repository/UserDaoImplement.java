@@ -130,7 +130,6 @@ public class UserDaoImplement extends AzureAbstractMongoRepositoryImpl<User> imp
         List<User> lisProduct = collection.find(query, User.class).sort(sort).limit(1).into(new ArrayList<User>());
         return lisProduct;
     }
-
     @Override
     public List<User> findUserById(ObjectId id) {
         MongoCollection<User> collection = getCollection(Constants.COLLECTION_USER, User.class);
@@ -157,4 +156,29 @@ public class UserDaoImplement extends AzureAbstractMongoRepositoryImpl<User> imp
         Document query = new Document().append("enabled", status);
         return collection.find(query, User.class).into(new ArrayList<User>());
     }
+
+    @Override
+    public Optional<User> findByMobilPhone(String mobilPhone) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<User> findByEmailOrMobilPhone(String email, String mobilPhone) {
+        MongoCollection<User> collection = getCollection(Constants.COLLECTION_USER, User.class);
+
+        Document query = new Document("$or", List.of(
+                new Document("email", email),
+                new Document("mobilPhone", mobilPhone)
+        ));
+
+        User user = collection.find(query, User.class).limit(1).first();
+        if (user != null) {
+            user.setPassword(user.getPasswordP());
+            user.setTokens(tokenRepository.findAllValidTokenByUser(user.getId()));
+            return Optional.of(user);
+        } else {
+            return Optional.empty();
+        }
+    }
+
 }

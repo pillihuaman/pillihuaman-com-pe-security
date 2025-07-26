@@ -115,6 +115,7 @@ public class AuthenticationService {
             throw new UnprocessableEntityException("Authentication failed " + ex.getMessage());
         }
     }
+
     private List<Roles> convertRolesRequestToRoles(List<RolesRequest> rolesRequestList) {
         if (rolesRequestList == null) return List.of();
         return rolesRequestList.stream().map(req ->
@@ -247,5 +248,28 @@ public class AuthenticationService {
         }
         return "";
     }
+
+    public AuthenticationResponse generateAndSaveTokens(User user) {
+        // 1. Generar tokens
+        String jwtToken = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        // 2. Revocar tokens anteriores
+        revokeAllUserTokens(user);
+
+        // 3. Guardar nuevo token
+        saveUserToken(user, jwtToken);
+
+        // 4. Mapear al DTO de usuario de respuesta
+        RespUser respUser = UserMapper.INSTANCE.toRespUser(user);
+
+        // 5. Construir respuesta
+        return AuthenticationResponse.builder()
+                .accessToken(jwtToken)
+                .refreshToken(refreshToken)
+                .user(respUser)
+                .build();
+    }
+
 
 }

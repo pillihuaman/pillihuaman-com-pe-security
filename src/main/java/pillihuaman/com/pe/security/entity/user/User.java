@@ -14,6 +14,7 @@ import pillihuaman.com.pe.security.entity.role.Roles;
 import pillihuaman.com.pe.security.entity.token.Token;
 import pillihuaman.com.pe.security.user.Role;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class User implements UserDetails {
     private String alias;
     @Indexed(unique = true)
     private String email;
+    @Indexed(unique = true, sparse = true)
     private String mobilPhone;
     private String userName;
     private String apiPassword;
@@ -39,12 +41,20 @@ public class User implements UserDetails {
     private boolean enabled;
     private String name;
     private String typeDocument;
-    @Indexed(unique = true)
+    @Indexed(unique = true, sparse = true)
     private String numTypeDocument;
     private List<Roles> roles;
     private List<System> system;
     private UserSetting customSettings;
     private List<Token> tokens;
+    private String verificationCode;
+
+    private LocalDateTime verificationCodeExpires;
+
+    @Builder.Default
+    private boolean emailVerified = false;
+    @Builder.Default
+    private boolean phoneVerified = false;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

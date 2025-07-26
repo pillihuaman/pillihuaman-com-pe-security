@@ -8,6 +8,7 @@ import pillihuaman.com.pe.security.util.MyJsonWebToken;
 
 import java.util.List;
 import java.util.Optional;
+
 @Repository
 public interface UserRepository extends BaseMongoRepository<User> {
 
@@ -26,4 +27,9 @@ public interface UserRepository extends BaseMongoRepository<User> {
     int getLastIdUser();
 
     List<User> listByStatus(boolean status);
+
+    Optional<User> findByMobilPhone(String mobilPhone);
+
+    Optional<User> findByEmailOrMobilPhone(String email, String mobilPhone);
+
 }

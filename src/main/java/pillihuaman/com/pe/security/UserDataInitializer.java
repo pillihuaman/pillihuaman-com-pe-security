@@ -27,6 +27,7 @@ public class UserDataInitializer {
         Optional<User> existing = userRepository.findByEmail(anonymousEmail);
 
         if (existing.isEmpty()) {
+
             List<Roles> anonymousRoles = roleRepository.findByName("ANONYMOUS");
 
             if (anonymousRoles == null || anonymousRoles.isEmpty()) {

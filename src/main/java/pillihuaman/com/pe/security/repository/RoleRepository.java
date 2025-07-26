@@ -11,4 +11,5 @@ public interface RoleRepository {
     List<Roles> findByName(String name);
     Roles save(Roles role);
     long countAll();
+
 }
