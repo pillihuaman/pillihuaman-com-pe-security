@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import pillihuaman.com.pe.lib.common.AuditEntity;
 import pillihuaman.com.pe.lib.common.RespBase;
 import pillihuaman.com.pe.lib.exception.CustomRestExceptionHandlerGeneric;
 import pillihuaman.com.pe.lib.exception.UnprocessableEntityException;
@@ -25,6 +26,7 @@ import pillihuaman.com.pe.security.entity.user.User;
 import pillihuaman.com.pe.security.repository.ControlRepository;
 import pillihuaman.com.pe.security.repository.TokenRepository;
 import pillihuaman.com.pe.security.repository.UserRepository;
+import pillihuaman.com.pe.security.service.AuditDataService;
 import pillihuaman.com.pe.security.user.mapper.ControlMapper;
 import pillihuaman.com.pe.security.user.mapper.UserMapper;
 import pillihuaman.com.pe.security.util.MyJsonWebToken;
@@ -49,14 +51,14 @@ public class AuthenticationService {
     private AuthenticationManager authenticationManager; // Inyectado con @RequiredArgsConstructor
     @Autowired
     private ControlRepository controlDAO; // Inyectado con @RequiredArgsConstructor
-
     @Autowired
     private CustomRestExceptionHandlerGeneric exceptionHandler; // Inyectado con @Autowired
-
     @Autowired
     private UserDetailsService userInfoUserDetailsServiceimplements; // Inyectado con @Autowired
+    private final AuditDataService auditDataService;
 
-    public AuthenticationResponse register(ReqUser request) {
+
+    public AuthenticationResponse register(ReqUser request, HttpServletRequest httpRequest) { // Aceptar httpRequest
         String password = passwordEncoder.encode(request.getPassword());
 
         var user = User.builder()
@@ -70,10 +72,11 @@ public class AuthenticationService {
                 .build();
 
         var savedUser = repository.saveUser(user, null);
-
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
-        saveUserToken(savedUser, jwtToken);
+
+        // Pasa la información de auditoría. El clientInfo es null en este flujo.
+        saveUserToken(savedUser, jwtToken, httpRequest, "REGISTER", null);
 
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
@@ -82,7 +85,8 @@ public class AuthenticationService {
                 .build();
     }
 
-    public Object authenticate(AuthenticationRequest request) {
+
+    public Object authenticate(AuthenticationRequest request, HttpServletRequest httpRequest) { // Aceptar httpRequest
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -91,15 +95,18 @@ public class AuthenticationService {
                     )
             );
 
-            var user = repository.findByEmail(request.getEmail()).orElseThrow();
-            List<User> lsr = repository.findUserName(request.getEmail());
-            RespUser respUser = UserMapper.INSTANCE.toRespUser(lsr.get(0));
-            var jwtToken = jwtService.generateToken(lsr.get(0));
-            var refreshToken = jwtService.generateRefreshToken(lsr.get(0));
-            var controls = ControlMapper.INSTANCE.controlsToRespControls(controlDAO.findByUser(lsr.get(0)));
+            // Simplificamos la búsqueda del usuario
+            var user = repository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new UnprocessableEntityException("Usuario no encontrado."));
 
-            revokeAllUserTokens(lsr.get(0));
-            saveUserToken(lsr.get(0), jwtToken);
+            RespUser respUser = UserMapper.INSTANCE.toRespUser(user);
+            var jwtToken = jwtService.generateToken(user);
+            var refreshToken = jwtService.generateRefreshToken(user);
+            var controls = ControlMapper.INSTANCE.controlsToRespControls(controlDAO.findByUser(user));
+
+            revokeAllUserTokens(user);
+            // Pasa el ClientAuditInfo del DTO
+            saveUserToken(user, jwtToken, httpRequest, "PASSWORD_AUTH", request.getClientInfo());
 
             return RespBase.builder()
                     .payload(AuthenticationResponse.builder()
@@ -109,10 +116,45 @@ public class AuthenticationService {
                             .controls(controls)
                             .build())
                     .trace(RespBase.Trace.builder().traceId("1").build())
-                    .status(RespBase.Status.builder().success(true).error(null).build())
+                    .status(RespBase.Status.builder().success(true).build())
                     .build();
         } catch (Exception ex) {
-            throw new UnprocessableEntityException("Authentication failed " + ex.getMessage());
+            throw new UnprocessableEntityException("Authentication failed: " + ex.getMessage());
+        }
+    }
+
+    // ▼▼▼ MÉTODO generateGuestToken ACTUALIZADO ▼▼▼
+    public Object generateGuestToken(HttpServletRequest httpRequest) { // Aceptar httpRequest
+        try {
+            String guestEmail = "pillihuamanhz@alamodaperu.online";
+            User mainGuestUser = repository.findByEmail(guestEmail)
+                    .orElseThrow(() -> new UnprocessableEntityException("Guest user not found in database."));
+
+            var jwtToken = jwtService.generateToken(mainGuestUser);
+            var refreshToken = jwtService.generateRefreshToken(mainGuestUser);
+            var controls = ControlMapper.INSTANCE.controlsToRespControls(controlDAO.findByUser(mainGuestUser));
+
+            revokeAllUserTokens(mainGuestUser);
+            // El clientInfo es null para el invitado
+            saveUserToken(mainGuestUser, jwtToken, httpRequest, "GUEST_AUTH", null);
+
+            RespUser respUser = UserMapper.INSTANCE.toRespUser(mainGuestUser);
+
+            AuthenticationResponse authResponse = AuthenticationResponse.builder()
+                    .accessToken(jwtToken)
+                    .refreshToken(refreshToken)
+                    .user(respUser)
+                    .controls(controls)
+                    .build();
+
+            return RespBase.builder()
+                    .payload(authResponse)
+                    .trace(RespBase.Trace.builder().traceId("guest-token").build())
+                    .status(RespBase.Status.builder().success(true).build())
+                    .build();
+
+        } catch (Exception ex) {
+            throw new UnprocessableEntityException("Guest token generation failed: " + ex.getMessage());
         }
     }
 
@@ -128,62 +170,23 @@ public class AuthenticationService {
         ).toList();
     }
 
-    public Object generateGuestToken() {
-        try {
-            // Buscar al usuario invitado
-            String guestEmail = "pillihuamanhz@alamodaperu.online"; // puedes usar un campo fijo
-            User mainGuestUser = repository.findByEmail(guestEmail)
-                    .orElseThrow(() -> new UnprocessableEntityException("Guest user not found in database."));
+    private void saveUserToken(User user, String jwtToken, HttpServletRequest request, String authMethod, ClientAuditInfo clientInfo) {
+        // 1. Construir la entidad de auditoría completa
+        AuditEntity audit = auditDataService.buildAuditEntity(request, clientInfo, user.getEmail(), authMethod);
 
-            // Obtener lista por nombre si es parte de tu lógica (opcional)
-            // List<User> usersByName = repository.findUserName(guestEmail);
-            // User mainGuestUser = usersByName.isEmpty() ? guestUser : usersByName.get(0);
-
-            // Generar tokens
-            String jwtToken = jwtService.generateToken(mainGuestUser);
-            String refreshToken = jwtService.generateRefreshToken(mainGuestUser);
-
-            // Obtener controles si aplica
-            var controls = ControlMapper.INSTANCE.controlsToRespControls(controlDAO.findByUser(mainGuestUser));
-
-            // Revocar tokens anteriores y guardar el nuevo
-            revokeAllUserTokens(mainGuestUser);
-            saveUserToken(mainGuestUser, jwtToken);
-
-            // Mapear user
-            RespUser respUser = UserMapper.INSTANCE.toRespUser(mainGuestUser);
-
-            // Construir respuesta
-            AuthenticationResponse authResponse = AuthenticationResponse.builder()
-                    .accessToken(jwtToken)
-                    .refreshToken(refreshToken)
-                    .user(respUser)
-                    .controls(controls)
-                    .build();
-
-            return RespBase.builder()
-                    .payload(authResponse)
-                    .trace(RespBase.Trace.builder().traceId("guest-token").build())
-                    .status(RespBase.Status.builder().success(true).error(null).build())
-                    .build();
-
-        } catch (Exception ex) {
-            throw new UnprocessableEntityException("Guest token generation failed: " + ex.getMessage());
-        }
-    }
-
-
-    private void saveUserToken(User user, String jwtToken) {
+        // 2. Crear el objeto Token
         var token = Token.builder()
+                .token(jwtToken) // Guarda el JWT como ID del documento
                 .user(user)
-                .token(jwtToken)
                 .tokenType(TokenType.BEARER)
                 .expired(false)
                 .revoked(false)
+                .audit(audit) // Asigna la entidad de auditoría enriquecida
                 .build();
+
+        // 3. Guardar en la base de datos
         tokenRepository.save(token);
     }
-
 
     private void revokeAllUserTokens(User user) {
         var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
@@ -197,24 +200,22 @@ public class AuthenticationService {
 
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String refreshToken;
-        final String userEmail;
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return;
         }
 
-        refreshToken = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(refreshToken);
+        final String refreshToken = authHeader.substring(7);
+        final String userEmail = jwtService.extractUsername(refreshToken);
 
         if (userEmail != null) {
-            var user = repository.findByEmail(userEmail).orElseThrow();
-            List<User> lsr = repository.findUserName(userEmail);
+            var user = repository.findByEmail(userEmail)
+                    .orElseThrow(() -> new UnprocessableEntityException("Usuario no encontrado para refresh token."));
 
-            if (jwtService.isTokenValid(refreshToken, lsr.get(0))) {
-                var accessToken = jwtService.generateToken(lsr.get(0));
-                revokeAllUserTokens(lsr.get(0));
-                saveUserToken(lsr.get(0), accessToken);
+            if (jwtService.isTokenValid(refreshToken, user)) {
+                var accessToken = jwtService.generateToken(user);
+                revokeAllUserTokens(user);
+                // También pasamos el request aquí para auditar la renovación
+                saveUserToken(user, accessToken, request, "REFRESH_TOKEN", null);
 
                 var authResponse = AuthenticationResponse.builder()
                         .accessToken(accessToken)
@@ -225,7 +226,6 @@ public class AuthenticationService {
             }
         }
     }
-
     public MyJsonWebToken getUserFromToken(String token) {
         String tokenSub = tokenSUb(token);
         Claims claims = jwtService.extractAllClaims(tokenSub);
@@ -248,28 +248,21 @@ public class AuthenticationService {
         }
         return "";
     }
-
-    public AuthenticationResponse generateAndSaveTokens(User user) {
-        // 1. Generar tokens
+    public AuthenticationResponse generateAndSaveTokens(User user, HttpServletRequest request) { // Aceptar httpRequest
         String jwtToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        // 2. Revocar tokens anteriores
         revokeAllUserTokens(user);
+        // El clientInfo es null porque este flujo viene del onboarding (backend)
+        saveUserToken(user, jwtToken, request, "ONBOARDING_VERIFY", null);
 
-        // 3. Guardar nuevo token
-        saveUserToken(user, jwtToken);
-
-        // 4. Mapear al DTO de usuario de respuesta
         RespUser respUser = UserMapper.INSTANCE.toRespUser(user);
 
-        // 5. Construir respuesta
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .user(respUser)
                 .build();
     }
-
 
 }

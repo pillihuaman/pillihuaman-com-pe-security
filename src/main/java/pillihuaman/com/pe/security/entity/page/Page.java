@@ -7,7 +7,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import pillihuaman.com.pe.security.Help.AuditEntity;
+import pillihuaman.com.pe.lib.common.AuditEntity;
 import pillihuaman.com.pe.security.entity.permission.Permission;
 import pillihuaman.com.pe.security.entity.user.User;
 

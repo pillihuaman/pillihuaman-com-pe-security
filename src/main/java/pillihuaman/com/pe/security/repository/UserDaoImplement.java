@@ -10,7 +10,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Repository;
-import pillihuaman.com.pe.security.Help.AuditEntity;
+import pillihuaman.com.pe.lib.common.AuditEntity;
 import pillihuaman.com.pe.security.Help.Constants;
 import pillihuaman.com.pe.security.AzureAbstractMongoRepositoryImpl;
 import pillihuaman.com.pe.security.entity.user.User;

@@ -8,10 +8,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import pillihuaman.com.pe.security.Help.AuditEntity;
 import pillihuaman.com.pe.security.entity.user.User;
 
-
+import pillihuaman.com.pe.lib.common.AuditEntity;
 import java.io.Serializable;
 import java.util.List;
 

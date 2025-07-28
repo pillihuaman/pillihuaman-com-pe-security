@@ -1,10 +1,14 @@
 package pillihuaman.com.pe.security.service.implement;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.Document; // <-- Importación necesaria
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import pillihuaman.com.pe.lib.exception.UnprocessableEntityException;
 import pillihuaman.com.pe.security.auth.AuthenticationService;
 import pillihuaman.com.pe.security.dto.AuthenticationResponse;
@@ -36,84 +40,88 @@ public class OnboardingServiceImpl implements OnboardingService {
     private static final String DEFAULT_USER_ROLE = "ANONYMOUS";
 
     @Override
-    @Transactional // Buena práctica para asegurar que todas las operaciones de DB se completen o fallen juntas
+    @Transactional
     public void processOnboardingRequest(OnboardingRequestDTO request) {
         // Usamos nuestro nuevo método del repositorio. Es más limpio y eficiente.
         User user = userRepository.findByEmailOrMobilPhone(request.getEmail(), request.getMobilPhone())
                 .orElse(null);
 
+        String code = new DecimalFormat("0000").format(new SecureRandom().nextInt(10000));
+
         if (user == null) {
+            // --- FLUJO: CREAR NUEVO USUARIO ---
             log.info("Usuario no encontrado con email [{}] o teléfono [{}]. Creando nuevo usuario.", request.getEmail(), request.getMobilPhone());
-            // -- FLUJO: Usuario NUEVO --
+
             List<Roles> defaultRole = roleRepository.findByName(DEFAULT_USER_ROLE);
 
-
-            user = User.builder()
+            User newUser = User.builder()
                     .email(request.getEmail())
                     .mobilPhone(request.getMobilPhone())
-                    .userName(request.getEmail()) // Se puede mejorar para usar un alias único
+                    .userName(request.getEmail())
                     .roles(defaultRole)
-                    .enabled(false) // El usuario nace deshabilitado hasta la verificación
+                    .enabled(false)
                     .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .verificationCode(code) // Asignamos el código
+                    .verificationCodeExpires(LocalDateTime.now().plusMinutes(5)) // y su expiración
                     .build();
+
+            // Usamos el método específico para insertar, que ya tienes
+            userRepository.insertOne(newUser);
+            log.info("Nuevo usuario creado y código de verificación [{}] generado.", code);
+
+            // Enviar notificación al nuevo usuario
+            notificationService.sendVerificationCode(newUser.getEmail(), newUser.getMobilPhone(), code);
+
         } else {
+            // --- FLUJO: ACTUALIZAR USUARIO EXISTENTE ---
             log.info("Usuario existente encontrado con ID [{}]. Actualizando código de verificación.", user.getId());
+
+            user.setVerificationCode(code);
+            user.setVerificationCodeExpires(LocalDateTime.now().plusMinutes(5));
+
+            // Creamos un filtro para encontrar el documento por su _id
+            Document filter = new Document("_id", user.getId());
+
+            // Usamos el método específico para actualizar, que ya tienes
+            userRepository.updateOne(filter, user);
+            log.info("Código de verificación [{}] actualizado para el usuario [{}].", code, user.getId());
+
+            // Enviar notificación al usuario existente
+            notificationService.sendVerificationCode(user.getEmail(), user.getMobilPhone(), code);
         }
-
-        // -- LÓGICA COMÚN --
-        String code = new DecimalFormat("0000").format(new SecureRandom().nextInt(10000));
-        user.setVerificationCode(code);
-        user.setVerificationCodeExpires(LocalDateTime.now().plusMinutes(5));
-
-        userRepository.save(user); // Guarda el usuario nuevo o actualiza el existente
-        log.info("Código de verificación [{}] generado para el usuario [{}].", code, user.getId());
-
-        // Enviar notificaciones por ambos canales (el servicio se encarga de la lógica)
-        notificationService.sendVerificationCode(user.getEmail(), user.getMobilPhone(), code);
     }
-
     @Override
     @Transactional
     public AuthenticationResponse verifyCodeAndLogin(VerifyCodeRequestDTO request) {
         log.info("Iniciando verificación para el identificador: {}", request.getIdentifier());
 
-        // 1. Buscar al usuario por email O teléfono usando el identificador
         User user = userRepository.findByEmailOrMobilPhone(request.getIdentifier(), request.getIdentifier())
                 .orElseThrow(() -> new UnprocessableEntityException("Usuario no encontrado. Verifique el email o teléfono."));
 
-        // 2. Validar el código de verificación
+        // ... (Validaciones de código y expiración sin cambios)
         if (user.getVerificationCode() == null || !user.getVerificationCode().equals(request.getCode())) {
-            log.warn("Intento de verificación fallido para el usuario [{}]: código inválido.", user.getId());
             throw new UnprocessableEntityException("El código de verificación es inválido.");
         }
-
-        // 3. Validar que el código no haya expirado
         if (user.getVerificationCodeExpires().isBefore(LocalDateTime.now())) {
-            log.warn("Intento de verificación fallido para el usuario [{}]: código expirado.", user.getId());
             throw new UnprocessableEntityException("El código de verificación ha expirado. Por favor, solicita uno nuevo.");
         }
 
-        // 4. ¡Éxito! Habilitar al usuario y limpiar los campos del código
         log.info("Código verificado exitosamente para el usuario [{}]. Habilitando cuenta.", user.getId());
         user.setEnabled(true);
         user.setVerificationCode(null);
         user.setVerificationCodeExpires(null);
+        if (request.getIdentifier().equals(user.getEmail())) user.setEmailVerified(true);
+        if (request.getIdentifier().equals(user.getMobilPhone())) user.setPhoneVerified(true);
 
-        // Opcional: Marcar email o teléfono como verificado
-        if (request.getIdentifier().equals(user.getEmail())) {
-            user.setEmailVerified(true);
-        }
-        if (request.getIdentifier().equals(user.getMobilPhone())) {
-            user.setPhoneVerified(true);
-        }
+        Document filter = new Document("_id", user.getId());
+        userRepository.updateOne(filter, user);
+        log.info("Usuario [{}] actualizado a estado verificado.", user.getId());
 
-        // 5. Guardar los cambios en el usuario
-        userRepository.save(user);
+        // CORRECCIÓN: Obtenemos la HttpServletRequest actual del contexto de Spring
+        HttpServletRequest httpRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
 
-        // 6. Generar y devolver los tokens de autenticación
         log.info("Generando tokens para el usuario verificado [{}].", user.getId());
-        // (Asumiendo que creaste el método 'generateAndSaveTokens' en el paso anterior)
-        return authenticationService.generateAndSaveTokens(user);
+        // Pasamos el request al método, solucionando el error de compilación
+        return authenticationService.generateAndSaveTokens(user, httpRequest);
     }
-
 }

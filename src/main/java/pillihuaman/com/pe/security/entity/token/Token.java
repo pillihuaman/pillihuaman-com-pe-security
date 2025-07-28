@@ -4,6 +4,7 @@ import lombok.*;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.stereotype.Component;
+import pillihuaman.com.pe.lib.common.AuditEntity;
 import pillihuaman.com.pe.security.entity.user.User;
 
 
@@ -24,7 +25,7 @@ public class Token implements Serializable  {
   public boolean revoked;
   public boolean expired;
   public User user;
-
+  private AuditEntity audit;
   public Token() {
   }
 
