@@ -1,20 +1,15 @@
-# =================================================================
-# ===      WORKFLOW UNIVERSAL DE CI/CD CON DOCKER Y AWS       ===
-# =================================================================
+# .github/workflows/deploy.yml
 
 name: Build, Push to ECR, and Deploy Microservice
 
 on:
   push:
     branches:
-      - master # O 'master', según tu repositorio
+      - master # o 'main'
 
-# =================================================================
-# ===         VARIABLES DE ENTORNO (CONFIGURACIÓN ÚNICA)        ===
-# =================================================================
 env:
   # --- Configuración de AWS (Apunta a tu NUEVA cuenta) ---
-  AWS_REGION: us-east-1 # La región de tu EC2 y ECR
+  AWS_REGION: us-east-1
   ECR_REGISTRY: 614520203803.dkr.ecr.us-east-1.amazonaws.com
 
   # ▼▼▼ ¡ACCIÓN REQUERIDA! Cambia estos dos valores para cada microservicio ▼▼▼
@@ -29,9 +24,6 @@ env:
   CODEARTIFACT_DOMAIN: pillihuamanlib
   CODEARTIFACT_OWNER_ID: 614520203803
 
-# =================================================================
-# ===                TRABAJO DE DESPLIEGUE (JOB)                ===
-# =================================================================
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -53,38 +45,21 @@ jobs:
 
       - name: Build and Push Docker image to ECR
         run: |
-          echo "Obteniendo token de CodeArtifact..."
           CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain ${{ env.CODEARTIFACT_DOMAIN }} --domain-owner ${{ env.CODEARTIFACT_OWNER_ID }} --query authorizationToken --output text)
-          
-          echo "Construyendo imagen de Docker..."
           docker build \
             --build-arg CODEARTIFACT_AUTH_TOKEN=$CODEARTIFACT_AUTH_TOKEN \
             -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest .
-          
-          echo "Subiendo imagen a ECR..."
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
-          echo "✅ Imagen subida exitosamente."
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.EC2_HOST }}
-          username: ${{ env.EC2_USER }}
+          username: ${{ env.EC_USER }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            echo "🚀 Desplegando en el servidor..."
             cd ~/mi-plataforma
-            
-            echo "Autenticando Docker con ECR en la instancia..."
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
-            
-            echo "Descargando la última imagen para ${{ env.DOCKER_COMPOSE_SERVICE_NAME }}..."
             docker-compose pull ${{ env.DOCKER_COMPOSE_SERVICE_NAME }}
-            
-            echo "Reiniciando el servicio ${{ env.DOCKER_COMPOSE_SERVICE_NAME }}..."
             docker-compose up -d --no-deps ${{ env.DOCKER_COMPOSE_SERVICE_NAME }}
-            
-            echo "✅ Despliegue completado."
-            
-            echo "Limpiando imágenes antiguas..."
             docker image prune -f
