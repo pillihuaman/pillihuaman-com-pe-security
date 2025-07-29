@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - main
-      - master  # ahora también responde a master
+      - master
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1   # ✅ Se define la región aquí
 
     steps:
       - name: Checkout code
@@ -19,6 +21,8 @@ jobs:
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: ${{ env.AWS_REGION }}   # ✅ Se pasa la región explícitamente
 
       - name: Build, tag, and push Docker image to Amazon ECR
         env:
