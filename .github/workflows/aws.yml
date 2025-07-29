@@ -7,7 +7,7 @@ name: Build, Push to ECR, and Deploy Microservice
 on:
   push:
     branches:
-      - main # O 'master', según tu repositorio
+      - master # O 'master', según tu repositorio
 
 # =================================================================
 # ===         VARIABLES DE ENTORNO (CONFIGURACIÓN ÚNICA)        ===
