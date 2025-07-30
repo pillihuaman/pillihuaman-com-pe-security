@@ -8,7 +8,7 @@ import pillihuaman.com.pe.security.entity.control.Control;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-30T08:16:40-0500",
+    date = "2025-07-30T11:24:17-0500",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.16 (Amazon.com Inc.)"
 )
 public class ControlMapperImpl implements ControlMapper {

@@ -1,20 +1,30 @@
 package pillihuaman.com.pe.security.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import pillihuaman.com.pe.lib.domain.TenantInterceptor;
-import pillihuaman.com.pe.lib.domain.TenantResolver;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class WebConfig {
 
-    @Autowired
-    private TenantResolver tenantResolver;
+    // Lee la propiedad "cors.allowed-origins" de tus variables de entorno.
+    // Spring la convertirá automáticamente en un array de Strings.
+    @Value("${cors.allowed-origins}")
+    private String[] allowedOrigins;
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new TenantInterceptor(tenantResolver));
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**") // Aplica la configuración a todos los endpoints
+                        .allowedOrigins(allowedOrigins) // Usa la lista de orígenes del .env
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+            }
+        };
     }
 }
