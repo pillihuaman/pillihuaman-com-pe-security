@@ -27,7 +27,6 @@ pillihuaman\com\pe\security\entity\token\Token$TokenBuilder.class
 pillihuaman\com\pe\security\service\implement\OnboardingServiceImpl.class
 pillihuaman\com\pe\security\util\MyJsonWebToken.class
 pillihuaman\com\pe\security\dto\ResponseUser.class
-pillihuaman\com\pe\security\config\WebConfig.class
 pillihuaman\com\pe\security\repository\BaseMongoRepository.class
 pillihuaman\com\pe\security\auth\ThemesRequest$ThemesRequestBuilder.class
 pillihuaman\com\pe\security\dto\ResponseUser$ResponseUserBuilder.class

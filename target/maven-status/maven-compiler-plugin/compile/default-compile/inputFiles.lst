@@ -57,8 +57,8 @@ D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuam
 D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\entity\control\Control.java
 D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\dto\RolesRequest.java
 D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\auth\AuthenticationController.java
-D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\config\WebConfig.java
 D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\repository\ControlRepository.java
+D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\CorsGlobalConfig.java
 D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\entity\token\TokenType.java
 D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\entity\user\Permission.java
 D:\Config\TestAzure\Back-end\pillihuaman-com-pe-security\src\main\java\pillihuaman\com\pe\security\repository\TokenDaoImplement.java
