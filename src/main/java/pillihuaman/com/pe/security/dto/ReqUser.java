@@ -3,7 +3,6 @@ package pillihuaman.com.pe.security.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.util.List;
 
 
@@ -25,6 +24,7 @@ public class ReqUser {
     private Integer code;
     private Boolean estatus;
     private List<RolesRequest> roles;
+    private String tenantId;
 
 }
 

@@ -15,5 +15,6 @@ public class Constants {
 	public static final String COLLECTION_ROLE = "role";
 	public static final String COLLECTION_TENANT = "tenat";
 
-	}
+    public static final String COLLECTION_NOTIFICATION_TEMPLATE ="notification_templates" ;
+}
 

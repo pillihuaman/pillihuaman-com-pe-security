@@ -16,6 +16,7 @@ public class ResponseUser {
     private String username;
     private int enabled;
     private ObjectId idRol;
+    private String tenantId;
 
 }
 

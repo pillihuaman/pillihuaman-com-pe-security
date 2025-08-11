@@ -1,20 +1,21 @@
 package pillihuaman.com.pe.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import pillihuaman.com.pe.security.dto.ResponseUser;
 import pillihuaman.com.pe.security.entity.user.User;
 import pillihuaman.com.pe.security.util.MyJsonWebToken;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.security.SignatureException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +32,8 @@ public class JwtService {
 
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
-
+    @Value("${app.jwt.default-tenant-id-for-testing:#{null}}")
+    private String defaultTenantIdForTesting;
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -99,20 +101,47 @@ public class JwtService {
     }
 
     private Map<String, Object> createClaimsFromUser(User userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("El objeto User no puede ser nulo.");
+        }
+
         Map<String, Object> claims = new HashMap<>();
 
+        // 1. Poblar datos del usuario
         Map<String, Object> userMap = new HashMap<>();
-        userMap.put("id", userDetails.getId().toHexString());
+        if (userDetails.getId() != null) {
+            userMap.put("id", userDetails.getId().toHexString());
+        }
         userMap.put("mobilPhone", userDetails.getMobilPhone());
         userMap.put("email", userDetails.getEmail());
         userMap.put("alias", userDetails.getAlias());
 
+        // 2. Poblar otros datos
         Map<String, Object> applicationMap = new HashMap<>();
         applicationMap.put("applicationID", "1");
 
         claims.put("user", userMap);
         claims.put("application", applicationMap);
         claims.put("role", userDetails.getRoles());
+
+        // 3. Lógica de Tenant ID segura, asumiendo que getTenantId() devuelve ObjectId
+        String tenantId = userDetails.getTenantId();
+        String finalTenantId;
+
+        if (tenantId != null) {
+            // Caso Normal: El usuario tiene un tenantId válido. Se convierte a String.
+            finalTenantId = tenantId;
+        } else {
+            // Caso de Fallback: El usuario NO tiene tenantId.
+            if (defaultTenantIdForTesting != null && !defaultTenantIdForTesting.isBlank()) {
+                finalTenantId = defaultTenantIdForTesting;
+            } else {
+                throw new IllegalStateException("Error crítico: El usuario " + userDetails.getUsername() + " no tiene un tenantId asignado.");
+            }
+        }
+
+        // 4. Añadir el tenantId al nivel raíz de los claims (UNA SOLA VEZ).
+        claims.put("tenantId", finalTenantId);
 
         return claims;
     }
@@ -121,14 +150,25 @@ public class JwtService {
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
+
         Claims claims = extractAllClaims(token);
 
         MyJsonWebToken myJsonWebToken = new MyJsonWebToken();
         Map<String, Object> userMap = (Map<String, Object>) claims.get("user");
+        String tenantIdFromToken = claims.get("tenantId", String.class);
+
         if (userMap != null) {
             ResponseUser user = new ResponseUser();
-            user.setId(new ObjectId( userMap.get("id").toString()));
-            user.setMail(userMap.get("email").toString());
+
+            Object rawId = userMap.get("id");
+            if (rawId != null) user.setId(new ObjectId(rawId.toString()));
+
+            Object rawEmail = userMap.get("email");
+            if (rawEmail != null) user.setMail(rawEmail.toString());
+
+            // Asignar el tenantId leído desde el nivel raíz de los claims
+            user.setTenantId(tenantIdFromToken);
+
             myJsonWebToken.setUser(user);
         }
         return myJsonWebToken;

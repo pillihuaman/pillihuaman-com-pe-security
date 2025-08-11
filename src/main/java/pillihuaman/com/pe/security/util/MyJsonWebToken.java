@@ -16,7 +16,7 @@ public class MyJsonWebToken extends JsonWebToken implements Serializable {
 
     private static long serialVersionUID = 1L;
 
-
+    private String tenantId;
     private ResponseUser user;
     private Aplication aplication;
 

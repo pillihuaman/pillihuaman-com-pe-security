@@ -44,7 +44,7 @@ public class User implements UserDetails {
     private UserSetting customSettings;
     private List<Token> tokens;
     private String verificationCode;
-
+    private String tenantId;
     private LocalDateTime verificationCodeExpires;
 
     @Builder.Default

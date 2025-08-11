@@ -22,7 +22,7 @@ public class RespUser {
 	private   boolean enabled;
 	private ObjectId idRol;
 	private String access_token;
-
+	private String tenantId;
 	public ObjectId getId() {
 		return id;
 	}
