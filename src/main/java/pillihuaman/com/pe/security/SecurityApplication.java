@@ -5,7 +5,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan; // <-- AÑADIR IMPORT
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
@@ -20,6 +21,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 @EnableMongoRepositories(basePackages = "pillihuaman.com.pe.security.repository")
 @Import(CustomRestExceptionHandlerGeneric.class)
 @ConfigurationPropertiesScan("pillihuaman.com.pe.security") // <-- AÑADIR ESTA ANOTACIÓN
+@EnableConfigurationProperties(EmailTemplatesConfig.class)
 public class SecurityApplication {
 
     public static void main(String[] args) {

@@ -1,0 +1,79 @@
+email:
+  templates:
+    welcome-contact: |
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+          .header {
+            background-color: #0077cc;
+            padding: 20px;
+            text-align: center;
+            color: white;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 24px;
+          }
+          .content {
+            padding: 20px;
+            color: #333;
+            line-height: 1.5;
+          }
+          .cta-button {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #0077cc;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+          }
+          .footer {
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            color: #777;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>¡Bienvenido a [[${platformName}]]!</h1>
+          </div>
+          <div class="content">
+            <p>Hola [[${name}]],</p>
+            <p>Gracias por tu interés en nuestra plataforma. Estamos aquí para ayudarte a encontrar la información que buscas y aprovechar al máximo nuestros servicios.</p>
+            <p>En nuestra plataforma encontrarás:</p>
+            <ul>
+              <li>Productos y servicios de alta calidad.</li>
+              <li>Atención personalizada para resolver tus dudas.</li>
+              <li>Recursos exclusivos para nuestros usuarios.</li>
+            </ul>
+            <p>Haz clic en el siguiente botón para conocer más:</p>
+            <a href="[[${ctaUrl}]]" class="cta-button">Explorar ahora</a>
+          </div>
+          <div class="footer">
+            &copy; [[${year}]] [[${platformName}]]. Todos los derechos reservados.
+          </div>
+        </div>
+      </body>
+      </html>
